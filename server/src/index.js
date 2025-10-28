@@ -250,19 +250,56 @@ app.put('/api/requests/:id/status', requireAdmin, async (req, res) => {
   }
 });
 
-// Auth (simple)
+// Auth (explicit, with logging and cafeId)
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body || {};
-    if (!email || !password) return res.status(400).json({ error: 'Missing credentials' });
+    if (!email || !password) {
+      console.log('❌ Login missing credentials');
+      return res.status(400).json({ error: 'Missing credentials' });
+    }
+
     const admin = await prisma.admin.findUnique({ where: { email } });
-    if (!admin) return res.status(401).json({ error: 'Invalid credentials' });
+    if (!admin) {
+      console.log('❌ Login no admin for', email);
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
     const valid = await bcrypt.compare(password, admin.password).catch(() => false);
-    if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
-    const token = jwt.sign({ adminId: admin.id, id: admin.id, email: admin.email, cafeId: admin.cafeId }, process.env.JWT_SECRET || 'change-me', { expiresIn: '7d' });
-    res.json({ token, email: admin.email });
+    if (!valid) {
+      console.log('❌ Login bad password for', email);
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    const token = jwt.sign(
+      { adminId: admin.id, cafeId: admin.cafeId, email: admin.email },
+      process.env.JWT_SECRET || 'change-me',
+      { expiresIn: '7d' }
+    );
+
+    console.log('✅ Login success for', email, 'cafe', admin.cafeId);
+
+    return res.json({ token, email: admin.email, cafeId: admin.cafeId });
   } catch (e) {
-    res.status(500).json({ error: 'Login failed' });
+    console.error('🔥 Login server error', e);
+    return res.status(500).json({ error: 'Login failed' });
+  }
+});
+
+// Debug route (temporary) to inspect cafes and admins
+app.get('/api/debug-status', async (req, res) => {
+  try {
+    const cafes = await prisma.cafe.findMany({ include: { admins: true } });
+    return res.json({
+      cafes: cafes.map(c => ({
+        id: c.id,
+        name: c.name,
+        admins: c.admins.map(a => ({ id: a.id, email: a.email, cafeId: a.cafeId }))
+      }))
+    });
+  } catch (err) {
+    console.error('debug-status error', err);
+    return res.status(500).json({ error: 'debug_failed' });
   }
 });
 
