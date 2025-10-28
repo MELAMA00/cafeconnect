@@ -6,7 +6,7 @@
   "scripts": {
     "install-all": "npm install --prefix server && npm install --prefix client",
     "prisma:generate": "npm --prefix server run prisma:generate",
-    "build-client": "npm run build --prefix client",
+    "build-client": "cd client && npm install && npm run build",
     "render-build": "npm run install-all && npm run prisma:generate && npm run build-client",
     "dev": "concurrently \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
     "start": "node server/index.js"
