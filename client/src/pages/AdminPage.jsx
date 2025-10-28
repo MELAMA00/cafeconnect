@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { api } from '../api'
+import api from '../api'
 import Spinner from '../components/Spinner.jsx'
 import { useToast } from '../components/ToastProvider.jsx'
 

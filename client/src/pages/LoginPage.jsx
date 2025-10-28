@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import axios from 'axios'
+import api from '../api'
 import { useNavigate } from 'react-router-dom'
 
 export default function LoginPage() {
@@ -12,7 +12,7 @@ export default function LoginPage() {
     e.preventDefault()
     setError('')
     try {
-      const res = await axios.post('/api/auth/login', { email, password })
+      const res = await api.post('/auth/login', { email, password })
       localStorage.setItem('token', res.data.token)
       localStorage.setItem('email', res.data.email)
       navigate('/admin')

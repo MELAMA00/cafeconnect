@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import axios from 'axios'
+import api from '../api'
 import MenuList from '../components/MenuList.jsx'
 import Spinner from '../components/Spinner.jsx'
 import { useToast } from '../components/ToastProvider.jsx'
@@ -16,12 +16,12 @@ export default function TablePage() {
 
   useEffect(() => {
     setLoading(true)
-    axios.get('/api/menu', { params: { cafeId } }).then((res) => setMenu(res.data)).finally(()=>setLoading(false))
+    api.get('/menu', { params: { cafeId } }).then((res) => setMenu(res.data)).finally(()=>setLoading(false))
   }, [cafeId])
 
   useEffect(() => {
     const fetchOrders = async () => {
-      const res = await axios.get('/api/orders', { params: { cafeId, tableId } })
+      const res = await api.get('/orders', { params: { cafeId, tableId } })
       setLastOrders(res.data)
     }
     fetchOrders()
@@ -71,7 +71,7 @@ export default function TablePage() {
         tableId: Number(tableId),
         items: cart.map((c) => ({ menuItemId: c.id, qty: c.qty, notes: c.notes || undefined })),
       }
-      await axios.post('/api/orders', payload)
+      await api.post('/orders', payload)
       setCart([])
       toast.show('Order sent ✅', 'success')
     } catch (e) {
@@ -81,7 +81,7 @@ export default function TablePage() {
 
   async function quickRequest(type) {
     try {
-      await axios.post('/api/requests', { cafeId: Number(cafeId), tableId: Number(tableId), type })
+      await api.post('/requests', { cafeId: Number(cafeId), tableId: Number(tableId), type })
       toast.show(`${type[0].toUpperCase() + type.slice(1)} request sent ✅`)
     } catch (e) {
       toast.show('Failed to send request ❌', 'error')

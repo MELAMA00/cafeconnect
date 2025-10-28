@@ -12,7 +12,7 @@ const prisma = new PrismaClient();
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-app.use(cors());
+app.use(cors({ origin: process.env.ALLOWED_ORIGIN || '*' }));
 app.use(express.json());
 
 // Auth middleware
@@ -268,22 +268,5 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`CafeConnect API running on http://localhost:${PORT}`);
+  console.log(`API running on port ${PORT}`);
 });
-
-// Static frontend serving (production)
-try {
-  const __filename = fileURLToPath(import.meta.url);
-  const __dirname = path.dirname(__filename);
-  const distPath = path.join(__dirname, '../../client/dist');
-  app.use(express.static(distPath));
-
-  app.get('*', (req, res) => {
-    if (req.path.startsWith('/api')) {
-      return res.status(404).json({ error: 'Not found' });
-    }
-    res.sendFile(path.join(distPath, 'index.html'));
-  });
-} catch (e) {
-  // ignore path errors in dev if dist doesn't exist
-}
