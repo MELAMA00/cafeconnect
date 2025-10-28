@@ -3,8 +3,7 @@ import cors from 'cors';
 import { PrismaClient } from '@prisma/client';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import bcrypt from 'bcrypt';
 
 dotenv.config();
 
@@ -257,15 +256,41 @@ app.post('/api/auth/login', async (req, res) => {
     const { email, password } = req.body || {};
     if (!email || !password) return res.status(400).json({ error: 'Missing credentials' });
     const admin = await prisma.admin.findUnique({ where: { email } });
-    if (!admin || admin.password !== password) {
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
+    if (!admin) return res.status(401).json({ error: 'Invalid credentials' });
+    const valid = await bcrypt.compare(password, admin.password).catch(() => false);
+    if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
     const token = jwt.sign({ adminId: admin.id, id: admin.id, email: admin.email, cafeId: admin.cafeId }, process.env.JWT_SECRET || 'change-me', { expiresIn: '7d' });
     res.json({ token, email: admin.email });
   } catch (e) {
     res.status(500).json({ error: 'Login failed' });
   }
 });
+
+async function ensureSeed() {
+  let cafe = await prisma.cafe.findFirst({ where: { id: 1 } });
+  if (!cafe) {
+    try {
+      cafe = await prisma.cafe.create({ data: { id: 1, name: 'Default Cafe', address: 'Online' } });
+      console.log('✅ Seeded default cafe (id=1)');
+    } catch (e) {
+      // If setting explicit id fails, create without id
+      cafe = await prisma.cafe.create({ data: { name: 'Default Cafe', address: 'Online' } });
+      console.log(`✅ Seeded default cafe (id=${cafe.id})`);
+    }
+  }
+
+  const adminEmail = 'admin@cafe.com';
+  const existingAdmin = await prisma.admin.findFirst({ where: { email: adminEmail } });
+  if (!existingAdmin) {
+    const hashed = await bcrypt.hash('admin123', 10);
+    await prisma.admin.create({ data: { email: adminEmail, password: hashed, cafeId: cafe.id } });
+    console.log('✅ Seeded default admin admin@cafe.com / admin123');
+  } else {
+    console.log('ℹ️ Admin already exists, skipping seed');
+  }
+}
+
+ensureSeed().catch(console.error);
 
 app.listen(PORT, () => {
   console.log(`API running on port ${PORT}`);
