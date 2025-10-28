@@ -1,0 +1,89 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Cafe {
+  id        Int       @id @default(autoincrement())
+  name      String
+  address   String?
+  createdAt DateTime  @default(now())
+  admins    Admin[]
+  tables    Table[]
+  menuItems MenuItem[]
+  orders    Order[]
+  requests  Request[]
+}
+
+model Admin {
+  id       Int    @id @default(autoincrement())
+  email    String @unique
+  password String
+  cafeId   Int
+  cafe     Cafe   @relation(fields: [cafeId], references: [id])
+}
+
+model Table {
+  id     Int    @id @default(autoincrement())
+  name   String
+  status String // "free" | "occupied"
+  cafeId Int
+  cafe   Cafe   @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+  orders Order[]
+  requests Request[]
+}
+
+model MenuItem {
+  id        Int     @id @default(autoincrement())
+  name      String
+  category  String
+  price     Float
+  description String?
+  available Boolean @default(true)
+  archived  Boolean @default(false)
+  imageUrl  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  cafeId    Int
+  cafe      Cafe    @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+  orderItems OrderItem[]
+}
+
+model Order {
+  id        Int       @id @default(autoincrement())
+  tableId   Int
+  status    String    // "new" | "preparing" | "served" | "paid"
+  createdAt DateTime  @default(now())
+  items     OrderItem[]
+  cafeId    Int
+
+  table Table @relation(fields: [tableId], references: [id], onDelete: Cascade)
+  cafe  Cafe  @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+}
+
+model OrderItem {
+  id          Int    @id @default(autoincrement())
+  orderId     Int
+  menuItemId  Int
+  quantity    Int
+  notes       String?
+
+  order    Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItem MenuItem @relation(fields: [menuItemId], references: [id])
+}
+
+model Request {
+  id        Int      @id @default(autoincrement())
+  tableId   Int
+  type      String   // "water" | "bill" | "waiter"
+  status    String   // "new" | "done"
+  createdAt DateTime @default(now())
+  cafeId    Int
+
+  table Table @relation(fields: [tableId], references: [id], onDelete: Cascade)
+  cafe  Cafe  @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+}

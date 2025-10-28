@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body { @apply bg-cream text-gray-900 font-sans; }
+}
+
+@layer components {
+  .btn { @apply px-4 py-2 rounded-lg bg-coffee-600 text-white hover:bg-coffee-700 active:bg-coffee-800 transition-colors disabled:opacity-50 shadow-soft; }
+  .btn-outline { @apply px-4 py-2 rounded-lg border border-coffee-300 text-coffee-800 hover:bg-coffee-50 transition-colors; }
+  .btn-ghost { @apply px-3 py-2 rounded-lg text-coffee-800 hover:bg-coffee-100; }
+  .card { @apply bg-white rounded-xl p-4 shadow-soft; }
+  .input { @apply border border-gray-300 rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-coffee-300; }
+  .label { @apply text-sm text-gray-700; }
+  .chip { @apply inline-block px-2 py-1 text-xs rounded-full bg-coffee-100 text-coffee-800; }
+}
+
+/* Simple fade-in for lists/cards */
+.animate-fade { @apply animate-fadeIn; }
