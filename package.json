@@ -7,10 +7,7 @@
     "node": "20.x"
   },
   "scripts": {
-    "install-all": "npm install --prefix server && npm install --prefix client",
-    "generate-prisma": "cd server && npm run prisma:generate",
-    "build-client": "cd client && npx vite build",
-    "render-build": "npm run install-all && npm run generate-prisma && npm run build-client",
+    "render-build": "npm install --prefix server && npm install --prefix client && npm --prefix server run prisma:generate && npm --prefix client run build",
     "dev": "concurrently \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
     "start": "node server/index.js"
   },
