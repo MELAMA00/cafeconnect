@@ -413,6 +413,7 @@ app.put('/api/requests/:id/status', requireAdmin, async (req, res) => {
 
 // seeding
 async function ensureSeed() {
+  // 1. make sure there's at least one cafe
   let cafe = await prisma.cafe.findFirst({ where: { id: 1 } });
   if (!cafe) {
     try {
@@ -428,22 +429,35 @@ async function ensureSeed() {
     }
   }
 
+  // 2. upsert the default admin
+  const adminEmail = 'admin@cafe.com';
+  const plainPass = 'admin123';
+  const hashed = await bcrypt.hash(plainPass, 10);
+
   const existingAdmin = await prisma.admin.findFirst({
-    where: { email: 'admin@cafe.com' },
+    where: { email: adminEmail },
   });
 
   if (!existingAdmin) {
-    const hashed = await bcrypt.hash('admin123', 10);
+    // create fresh admin if it doesn't exist
     await prisma.admin.create({
       data: {
-        email: 'admin@cafe.com',
+        email: adminEmail,
         password: hashed,
         cafeId: cafe.id,
       },
     });
     console.log('✅ Seeded default admin admin@cafe.com / admin123');
   } else {
-    console.log('ℹ️ Admin already exists, skipping seed');
+    // always sync password to known value admin123
+    await prisma.admin.update({
+      where: { id: existingAdmin.id },
+      data: {
+        password: hashed,
+        cafeId: cafe.id,
+      },
+    });
+    console.log('🔁 Synced admin password to admin123 for admin@cafe.com');
   }
 }
 
